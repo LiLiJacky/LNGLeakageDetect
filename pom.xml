@@ -34,6 +34,35 @@
             <artifactId>flink-clients_${scala.binary.version}</artifactId>
             <version>${flink.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+            <version>5.2</version>
+        </dependency>
+
+        <!--&lt;!&ndash; https://mvnrepository.com/artifact/org.apache.flink/flink-table-api-java-bridge &ndash;&gt;-->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-api-java-bridge_2.11</artifactId>
+            <version>${flink.version}</version>
+            <!--<scope>provided</scope>-->
+        </dependency>
+
+        <!--&lt;!&ndash; https://mvnrepository.com/artifact/org.apache.flink/flink-table-planner &ndash;&gt;-->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-planner_2.11</artifactId>
+            <version>${flink.version}</version>
+
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table</artifactId>
+            <version>${flink.version}</version>
+            <type>pom</type>
+            <!--<scope>provided</scope>-->
+        </dependency>
         <!-- 引入日志管理相关依赖-->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -65,6 +94,26 @@
             <artifactId>flink-cep_${scala.binary.version}</artifactId>
             <version>${flink.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.espertech</groupId>
+            <artifactId>esper-runtime</artifactId>
+            <version>8.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.espertech</groupId>
+            <artifactId>esper-common</artifactId>
+            <version>8.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.espertech</groupId>
+            <artifactId>esper-compiler</artifactId>
+            <version>8.3.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-planner_2.11</artifactId>
+            <version>1.8.1</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>
@@ -74,7 +123,6 @@
                 <version>3.0.0</version>
                 <configuration>
                     <descriptorRefs>
-                        34
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
                 </configuration>
@@ -85,6 +133,61 @@
                         <goals>
                             <goal>single</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <!--<version>2.3</version>-->
+                <version>3.1.0</version>
+                <executions>
+                    <!-- Run shade goal on package phase -->
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <shadedClassifierName>launcher</shadedClassifierName>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <artifactSet>
+                                <includes>
+                                    <include>org.apache.flink:flink-java*</include>
+                                    <include>org.apache.flink:flink-streaming-java*</include>
+                                    <include>org.apache.flink:flink-cep*</include>
+                                    <include>org.apache.flink:flink-table*</include>
+                                    <include>org.apache.flink:flink-connector-kafka-*</include>
+                                    <include>org.apache.kafka:*</include>
+                                    <include>org.apache.flink:flink-connector-kafka_2.11</include>
+                                    <include>org.apache.flink:flink-connector-kafka-base_2.11</include>
+                                    <include>org.apache.flink:flink-shaded-guava:18.0-6.0</include>
+                                    <include>org.slf4j:*</include>
+                                    <include>com.opencsv:*</include>
+                                    <include>log4j:*</include>
+                                </includes>
+                            </artifactSet>
+                            <transformers>
+                                <!-- add Main-Class to manifest file -->
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>ee.ut.cs.ee.ut.cs.dsg.example.linearroad.LinearRoadRunner</mainClass>
+                                </transformer>
+                            </transformers>
+                            <!--<relocations>-->
+                            <!--<relocation>-->
+                            <!--<pattern>org.codehaus.plexus.util</pattern>-->
+                            <!--<shadedPattern>org.shaded.plexus.util</shadedPattern>-->
+                            <!--<excludes>-->
+                            <!--<exclude>org.codehaus.plexus.util.xml.Xpp3Dom</exclude>-->
+                            <!--<exclude>org.codehaus.plexus.util.xml.pull.*</exclude>-->
+                            <!--</excludes>-->
+                            <!--</relocation>-->
+                            <!--</relocations>-->
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
