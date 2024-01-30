@@ -11,7 +11,7 @@ import top.soaringlab.example.event.TemperatureEvent;
  * @Description
  * @date 1/26/24 4:56 PM
  **/
-public class ThroughputRecorder  extends RichMapFunction<TemperatureEvent, TemperatureEvent> {
+public class TemperatureEventRecorder extends RichMapFunction<TemperatureEvent, TemperatureEvent> {
     private transient Meter meter;
 
     @Override

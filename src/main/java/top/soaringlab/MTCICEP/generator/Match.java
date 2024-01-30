@@ -47,15 +47,18 @@ public class Match {
     private IntervalEvent lhsIntervalEvent;
     private IntervalEvent rhsIntervalEvent;
     private MatchType matchType;
+    private String rid;
 
     public IntervalEvent getLeftInterval(){return  lhsIntervalEvent;}
     public IntervalEvent getRightInterval() {return rhsIntervalEvent;}
     public MatchType getMatchType(){return matchType;}
-    private Match(IntervalEvent lhs, IntervalEvent rhs, MatchType matchType)
+    public Match() {}
+    public Match(IntervalEvent lhs, IntervalEvent rhs, MatchType matchType, String rid)
     {
         this.lhsIntervalEvent = lhs;
         this.rhsIntervalEvent = rhs;
         this.matchType = matchType;
+        this.rid = rid;
     }
     @Override
     public String toString() {
@@ -97,7 +100,7 @@ public class Match {
     }
     public static Match getMatch(IntervalEvent e1, IntervalEvent e2)
     {
-        return new Match(e1, e2, getMatchType(e1,e2));
+        return new Match(e1, e2, getMatchType(e1,e2), e1.getKey());
     }
     @Override
     public boolean equals(Object other)

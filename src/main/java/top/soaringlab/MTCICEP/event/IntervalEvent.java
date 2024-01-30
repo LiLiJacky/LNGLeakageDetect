@@ -19,6 +19,7 @@ public class IntervalEvent  extends Tuple6<LongValue, LongValue, DoubleValue, St
 
 //    protected String key
 //    protected String timeScale
+//      protected String intervalName
 
     public IntervalEvent()
     {

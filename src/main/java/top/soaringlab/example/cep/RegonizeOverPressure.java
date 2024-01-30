@@ -94,7 +94,6 @@ public class RegonizeOverPressure {
         @Override
         public void processElement(TankPressure tankPressure, KeyedProcessFunction<Integer, TankPressure, SimpleEventLog>.Context context, Collector<SimpleEventLog> collector) throws Exception {
             if (tankPressure.pressure > 17.2) {
-                System.out.println(tankPressure.toString());
                 if (beginTime == null) beginTime.update(tankPressure.timeStamp);
                 overPressure.add(tankPressure);
                 endTime.update(tankPressure.timeStamp);

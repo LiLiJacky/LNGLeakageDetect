@@ -9,7 +9,7 @@ import top.soaringlab.MTCICEP.event.IntervalEvent;
  **/
 public class ThresholdInterval extends IntervalEvent {
 
-    public ThresholdInterval() {}
+    public ThresholdInterval() {super();}
     public ThresholdInterval(long sts, long ets, double value, String valueDescriptor, String key, String tc) {
         super(sts, ets, value, valueDescriptor, key, tc);
     }

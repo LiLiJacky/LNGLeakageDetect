@@ -8,26 +8,9 @@ import top.soaringlab.MTCICEP.event.IntervalEvent;
  * @date 1/26/24 5:03 PM
  **/
 public class AggregateInterval extends IntervalEvent {
-
-
     public AggregateInterval(long sts, long ets, double value, String valueDescriptor, String key, String tc) {
         super(sts, ets, value, valueDescriptor, key, tc);
     }
-
-//    @Override
-//    public long getStartTimestamp() {
-//        return startTimestamp;
-//    }
-//
-//    @Override
-//    public long getEndTimestamp() {
-//        return endTimestamp;
-//    }
-//
-//    public double getValue() {
-//        return value;
-//    }
-
 
     @Override
     public boolean equals(Object obj) {
@@ -50,7 +33,4 @@ public class AggregateInterval extends IntervalEvent {
     {
         return super.toString().replace("IntervalEvent","AggregateInterval");
     }
-
-
-
 }

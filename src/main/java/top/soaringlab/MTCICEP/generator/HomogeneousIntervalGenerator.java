@@ -429,7 +429,6 @@ public class HomogeneousIntervalGenerator<S extends RawEvent, W extends Interval
         }
 
         interval = interval.greedy();
-        System.out.println("within" + within.toMilliseconds());
         if (within != null)
             interval = interval.within(within);
 
@@ -447,17 +446,9 @@ public class HomogeneousIntervalGenerator<S extends RawEvent, W extends Interval
 //        else
 //            interval = interval.where(new RelativeIterativeCondition<>(condition, RelativeIterativeCondition.ConditionContainer.Where));
         PatternStream<S> pattern;
-        System.out.println(interval);
         if (!(sourceStream instanceof KeyedStream)) {
             pattern = CEP.pattern(sourceStream.keyBy((KeySelector<S, String>) RawEvent::getKey), interval);
         } else pattern = CEP.pattern(sourceStream, interval);
-        pattern.flatSelect(new PatternFlatSelectFunction<S, S>() {
-            @Override
-            public void flatSelect(Map<String, List<S>> map, Collector<S> collector) throws Exception {
-                System.out.println(map);
-            }
-        });
-
 
         targetStream = pattern.select(new HomogeneousIntervalElementsCollector<>(targetTypeClass, outputValueOperand), TypeInformation.of(targetTypeClass));
 

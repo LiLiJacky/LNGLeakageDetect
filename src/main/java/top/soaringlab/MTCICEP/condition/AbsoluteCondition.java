@@ -22,7 +22,6 @@ public class AbsoluteCondition extends Condition {
 
     @Override
     public Condition RHS(Object operand) {
-        System.out.println(operand);
         this.rhs = operand;
         return this;
     }

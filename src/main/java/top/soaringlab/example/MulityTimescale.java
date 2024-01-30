@@ -7,10 +7,12 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import top.soaringlab.MTCICEP.condition.*;
 import top.soaringlab.MTCICEP.generator.HomogeneousIntervalGenerator;
-import top.soaringlab.example.event.TemperatureEvent;
-import top.soaringlab.example.event.TemperatureWarning;
-import top.soaringlab.example.event.ThresholdInterval;
-import top.soaringlab.example.mapper.ThroughputRecorder;
+import top.soaringlab.MTCICEP.generator.IntervalOperator;
+import top.soaringlab.MTCICEP.generator.Match;
+import top.soaringlab.example.event.*;
+import top.soaringlab.example.mapper.PressureEventRecorder;
+import top.soaringlab.example.mapper.TemperatureEventRecorder;
+import top.soaringlab.example.source.PressureSource;
 import top.soaringlab.example.source.TemperatureSource;
 
 import java.time.Duration;
@@ -52,11 +54,11 @@ public class MulityTimescale {
                 .outputValue(Operand.Max)
                 .produceOnlyMaximalIntervals(true);
 
-        DataStream<TemperatureWarning> warning1 = newInterval.runWithCEP();
+        DataStream<TemperatureWarning> temperatureWarning = newInterval.runWithCEP();
 
         inputEventStream.print();
 
-        warning1.print();
+        temperatureWarning.print();
         env.execute("CEP Interval job");
     }
 
@@ -65,59 +67,93 @@ public class MulityTimescale {
 
         env.getConfig().setAutoWatermarkInterval(200);
 
-        DataStream<TemperatureEvent> randomStream = env.addSource(new TemperatureSource(1, 1, 35))
+        // millisStream
+        DataStream<TemperatureEvent> millisStream = env.addSource(new TemperatureSource(1, 1, 35))
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<TemperatureEvent>forBoundedOutOfOrderness(Duration.ofMillis(10))
                         .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
-        randomStream = randomStream.map(new ThroughputRecorder());
-//        randomStream.print();
+        millisStream = millisStream.map(new TemperatureEventRecorder());
 
-        //Threshold
-        HomogeneousIntervalGenerator<TemperatureEvent, ThresholdInterval> threshold = new HomogeneousIntervalGenerator<>();
-        Operation operation1 = new OperandWrapper(Operand.Value);
-        Operation operation2 = new SingleValue(31);
-        Expression expression = new ConditionNew(operation1,Operator.GreaterThanEqual,operation2);
-        threshold.source(randomStream)
+        HomogeneousIntervalGenerator<TemperatureEvent, TemperatureWarning> temp = new HomogeneousIntervalGenerator<>();
+        Operation operationt1 = new OperandWrapper(Operand.Value);
+        Operation operationt2 = new SingleValue(31);
+        Expression expressiont = new ConditionNew(operationt1,Operator.GreaterThanEqual,operationt2);
+        temp.source(millisStream)
                 .sourceType(TemperatureEvent.class)
-                .targetType(ThresholdInterval.class)
-                .condition(new AbsoluteCondition(expression))
+                .targetType(TemperatureWarning.class)
+                .condition(new AbsoluteCondition(expressiont))
                 .within(Time.milliseconds(10))
                 .outputValue(Operand.Average)
                 .produceOnlyMaximalIntervals(true);
-        DataStream<ThresholdInterval> thresholdWarning = threshold.runWithCEP();
-        thresholdWarning.print();
-//
-////
+        DataStream<TemperatureWarning> temperatureWarning = temp.runWithCEP();
+        temperatureWarning.print();
 
-//        AbsoluteCondition absoluteCondition = new AbsoluteCondition();
-//        absoluteCondition.operator(Operator.Absolute).RHS(new AbsoluteCondition().LHS(Operand.Value).operator(Operator.Minus).RHS(Operand.Min));
-//        //Delta
-//        HomogeneousIntervalGenerator<TemperatureEvent, DeltaInterval> delta = new HomogeneousIntervalGenerator<>();
-//        delta.source(randomStream)
+        // secondsStream
+        DataStream<PressureEvent> secondsStream = env.addSource(new PressureSource(1, 3, 20))
+                .assignTimestampsAndWatermarks(WatermarkStrategy.<PressureEvent>forBoundedOutOfOrderness(Duration.ofSeconds(10))
+                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+        secondsStream = secondsStream.map(new PressureEventRecorder());
+        HomogeneousIntervalGenerator<PressureEvent, PressureWarning> pre = new HomogeneousIntervalGenerator<>();
+        Operation operationp1 = new OperandWrapper(Operand.Value);
+        Operation operationp2 = new SingleValue(24);
+        Expression expressionp = new ConditionNew(operationp1,Operator.GreaterThanEqual,operationp2);
+        pre.source(secondsStream)
+                .sourceType(PressureEvent.class)
+                .targetType(PressureWarning.class)
+                .condition(new AbsoluteCondition(expressionp))
+                .within(Time.seconds(10))
+                .outputValue(Operand.Average)
+                .produceOnlyMaximalIntervals(true);
+        DataStream<PressureWarning> pressureWarning = pre.runWithCEP();
+        pressureWarning.print();
+
+        IntervalOperator<TemperatureWarning, PressureWarning> matchOperator = new IntervalOperator<>();
+
+        matchOperator.leftIntervalStream(temperatureWarning)
+                .rightIntervalStream(pressureWarning)
+                .within(Time.seconds(10))
+                .filterForMatchType(Match.MatchType.Equals)
+                .filterForMatchType(Match.MatchType.During)
+                .filterForMatchType(Match.MatchType.Contains)
+                .filterForMatchType(Match.MatchType.Overlaps)
+                .filterForMatchType(Match.MatchType.Starts)
+                .filterForMatchType(Match.MatchType.StartedBy)
+                .filterForMatchType(Match.MatchType.Finishes)
+                .filterForMatchType(Match.MatchType.FinishedBy)
+                .filterForMatchType(Match.MatchType.Before)
+                .filterForMatchType(Match.MatchType.After);
+
+        DataStream<Match> matches = matchOperator.run();
+
+        matches.print();
+//        DataStream<TemperatureEvent> millisStream2 = env.addSource(new TemperatureSource(1, 1, 35))
+//                .assignTimestampsAndWatermarks(WatermarkStrategy.<TemperatureEvent>forBoundedOutOfOrderness(Duration.ofMillis(10))
+//                        .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
+//        millisStream2 = millisStream2.map(new TemperatureEventRecorder());
+//        HomogeneousIntervalGenerator<TemperatureEvent, TemperatureWarning> temp2 = new HomogeneousIntervalGenerator<>();
+//        Operation operationt3 = new OperandWrapper(Operand.Value);
+//        Operation operationt4 = new SingleValue(33);
+//        Expression expressiont2 = new ConditionNew(operationt3,Operator.GreaterThanEqual,operationt4);
+//        temp2.source(millisStream2)
 //                .sourceType(TemperatureEvent.class)
-//                .targetType(DeltaInterval.class)
-//                .condition(new RelativeCondition().LHS(true).operator(Operator.Equals).RHS(true).relativeLHS(absoluteCondition).relativeOperator(Operator.GreaterThanEqual).relativeRHS(0.01))
-//                .minOccurrences(2)
-//                .within(Time.milliseconds((100)))
-//                .outputValue(Operand.Max)
-//                .produceOnlyMaximalIntervals(true);
-//
-//        DataStream<DeltaInterval> deltaWarning = delta.runWithCEP();
-//        deltaWarning.print();
-//
-//
-//        HomogeneousIntervalGenerator<TemperatureEvent, AggregateInterval> aggregate = new HomogeneousIntervalGenerator<>();
-//
-//        aggregate.source(randomStream)
-//                .sourceType(TemperatureEvent.class)
-//                .targetType(AggregateInterval.class)
-//                .condition(new RelativeCondition().LHS(true).operator(Operator.Equals).RHS(true).relativeLHS(Operand.Average).relativeOperator(Operator.GreaterThan).relativeRHS(36))
-//                .minOccurrences(2)
-//                .within(Time.milliseconds((100)))
+//                .targetType(TemperatureWarning.class)
+//                .condition(new AbsoluteCondition(expressiont2))
+//                .within(Time.milliseconds(10))
 //                .outputValue(Operand.Average)
 //                .produceOnlyMaximalIntervals(true);
-//
-//        DataStream<AggregateInterval> aggregateWarning = aggregate.runWithCEP();
-//        aggregateWarning.print();
+//        DataStream<TemperatureWarning> temperatureWarning2 = temp.runWithCEP();
+//        temperatureWarning2.print();
+//        IntervalOperator.before(temperatureWarning, temperatureWarning2, Time.minutes(1)).print();
+//        IntervalOperator.meets(temperatureWarning, temperatureWarning2, Time.minutes(1)).print();
+//        IntervalOperator.equalTo(temperatureWarning, temperatureWarning2, Time.minutes(1)).print();
+//        IntervalOperator.overlap(temperatureWarning, temperatureWarning2, Time.minutes(1)).print();
+//        IntervalOperator.during(temperatureWarning, temperatureWarning2, Time.minutes(1)).print();
+//        IntervalOperator.starts(temperatureWarning, temperatureWarning2, Time.minutes(1)).print();
+//        IntervalOperator.finishes(temperatureWarning, temperatureWarning2, Time.minutes(1)).print();
+//        IntervalOperator.contains(temperatureWarning, temperatureWarning2, Time.minutes(1)).print();
+//        IntervalOperator.startsBy(temperatureWarning, temperatureWarning2, Time.minutes(1)).print();
+//        IntervalOperator.overlapby(temperatureWarning, temperatureWarning2, Time.minutes(1)).print();
+//        IntervalOperator.metBy(temperatureWarning, temperatureWarning2, Time.minutes(1)).print();
+//        IntervalOperator.after(temperatureWarning, temperatureWarning2, Time.minutes(1)).print();
 
         //Step No 5
         //Trigger the programme execution by calling execute(), mode of execution (local or cluster).

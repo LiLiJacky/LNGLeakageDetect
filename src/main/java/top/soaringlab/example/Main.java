@@ -2,18 +2,13 @@ package top.soaringlab.example;
 
 import org.apache.flink.api.common.JobExecutionResult;
 import org.apache.flink.api.common.eventtime.WatermarkStrategy;
-import org.apache.flink.streaming.api.TimeCharacteristic;
 import org.apache.flink.streaming.api.datastream.DataStream;
-import org.apache.flink.streaming.api.datastream.DataStreamSource;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.time.Time;
-import org.apache.flink.streaming.runtime.operators.util.AssignerWithPeriodicWatermarksAdapter;
 import top.soaringlab.MTCICEP.condition.*;
-import top.soaringlab.MTCICEP.event.IntervalEvent;
-import top.soaringlab.MTCICEP.event.RawEvent;
 import top.soaringlab.MTCICEP.generator.HomogeneousIntervalGenerator;
 import top.soaringlab.example.event.*;
-import top.soaringlab.example.mapper.ThroughputRecorder;
+import top.soaringlab.example.mapper.TemperatureEventRecorder;
 import top.soaringlab.example.source.TemperatureSource;
 
 import java.time.Duration;
@@ -71,7 +66,7 @@ public class Main {
         DataStream<TemperatureEvent> randomStream = env.addSource(new TemperatureSource(1, 1, 35))
                 .assignTimestampsAndWatermarks(WatermarkStrategy.<TemperatureEvent>forBoundedOutOfOrderness(Duration.ofMillis(10))
                         .withTimestampAssigner((event, timestamp) -> event.getTimestamp()));
-        randomStream = randomStream.map(new ThroughputRecorder());
+        randomStream = randomStream.map(new TemperatureEventRecorder());
 //        randomStream.print();
 
          //Threshold

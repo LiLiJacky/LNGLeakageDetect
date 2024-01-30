@@ -27,19 +27,12 @@ class HomogeneousIntervalElementsCollector<S extends RawEvent, W extends Interva
 
 
     public void flatSelect(Map<String, List<S>> map, Collector<W> collector) throws Exception {
-        System.out.println("not in");
         matchingEvents = map.get("1");
-        for(S i : matchingEvents) {
-            System.out.println(i.toString());
-        }
-        System.out.println("selecet");
         double outputValue = 0;
         String rid = matchingEvents.get(0).getKey();
         String outValueDescription = outValueOperand.toString();
-        System.out.println(outValueDescription);
         if (outValueOperand == Operand.First) {
             outputValue = matchingEvents.get(0).getValue();
-
         } else if (outValueOperand == Operand.Last) {
             outputValue = matchingEvents.get(matchingEvents.size() - 1).getValue();
         } else         if (outValueOperand == Operand.Average) {
@@ -72,16 +65,10 @@ class HomogeneousIntervalElementsCollector<S extends RawEvent, W extends Interva
     }
 
     public W select(Map<String, List<S>> map) throws Exception {
-        System.out.println("not in");
         matchingEvents = map.get("1");
-        for(S i : matchingEvents) {
-            System.out.println(i.toString());
-        }
-        System.out.println("selecet");
         double outputValue = 0;
         String rid = matchingEvents.get(0).getKey();
         String outValueDescription = outValueOperand.toString();
-        System.out.println(outValueDescription);
         if (outValueOperand == Operand.First) {
             outputValue = matchingEvents.get(0).getValue();
 
