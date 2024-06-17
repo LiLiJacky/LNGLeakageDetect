@@ -45,7 +45,6 @@
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-api-java-bridge_2.11</artifactId>
             <version>${flink.version}</version>
-            <!--<scope>provided</scope>-->
         </dependency>
 
         <!--&lt;!&ndash; https://mvnrepository.com/artifact/org.apache.flink/flink-table-planner &ndash;&gt;-->
@@ -53,7 +52,6 @@
             <groupId>org.apache.flink</groupId>
             <artifactId>flink-table-planner_2.11</artifactId>
             <version>${flink.version}</version>
-
         </dependency>
 
         <dependency>
@@ -63,6 +61,22 @@
             <type>pom</type>
             <!--<scope>provided</scope>-->
         </dependency>
+
+        <!-- 用于文件系统连接 -->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-files</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+
+        <!-- CSV格式支持 -->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-csv</artifactId>
+            <version>${flink.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
         <!-- 引入日志管理相关依赖-->
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -111,8 +125,8 @@
         </dependency>
         <dependency>
             <groupId>org.apache.flink</groupId>
-            <artifactId>flink-table-planner_2.11</artifactId>
-            <version>1.8.1</version>
+            <artifactId>flink-table-planner-blink_2.11</artifactId>
+            <version>${flink.version}</version>
         </dependency>
     </dependencies>
     <build>

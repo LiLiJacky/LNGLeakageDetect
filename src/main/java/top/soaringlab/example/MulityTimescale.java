@@ -6,6 +6,8 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import top.soaringlab.MTCICEP.condition.*;
+import top.soaringlab.MTCICEP.event.EventRecord;
+import top.soaringlab.MTCICEP.generator.EventRecordGenerator;
 import top.soaringlab.MTCICEP.generator.HomogeneousIntervalGenerator;
 import top.soaringlab.MTCICEP.generator.IntervalOperator;
 import top.soaringlab.MTCICEP.generator.Match;
@@ -28,38 +30,6 @@ public class MulityTimescale {
     public static void main(String[] args) throws Exception {
         testHomogenousIntervals();
 
-    }
-
-    private static void testHeterogenousIntervals() throws Exception {
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-
-        List<TemperatureEvent> myTemps = new ArrayList<>();
-
-        myTemps.add(new TemperatureEvent("1", 1, 30, "ms"));
-        myTemps.add(new TemperatureEvent("1", 2, 35, "ms"));
-        myTemps.add(new TemperatureEvent("1", 3, 33, "ms"));
-        myTemps.add(new TemperatureEvent("1", 4, 40, "ms"));
-
-        DataStream<TemperatureEvent> inputEventStream = env.fromCollection(myTemps);
-
-        HomogeneousIntervalGenerator<TemperatureEvent, TemperatureWarning> newInterval = new HomogeneousIntervalGenerator<>();
-
-        newInterval.source(inputEventStream)
-                .sourceType(TemperatureEvent.class)
-                .condition(new RelativeCondition().relativeLHS(Operand.Value).relativeOperator(Operator.GreaterThan).relativeRHS(Operand.Last).operator(Operator.GreaterThanEqual).RHS(30))
-                //  .minOccurrences(2)
-                .targetType(TemperatureWarning.class)
-                .maxOccurrences(3)
-                .within(Time.milliseconds(5))
-                .outputValue(Operand.Max)
-                .produceOnlyMaximalIntervals(true);
-
-        DataStream<TemperatureWarning> temperatureWarning = newInterval.runWithCEP();
-
-        inputEventStream.print();
-
-        temperatureWarning.print();
-        env.execute("CEP Interval job");
     }
 
     private static void testHomogenousIntervals() throws Exception {
@@ -86,6 +56,15 @@ public class MulityTimescale {
                 .produceOnlyMaximalIntervals(true);
         DataStream<TemperatureWarning> temperatureWarning = temp.runWithCEP();
         temperatureWarning.print();
+
+        EventRecordGenerator<TemperatureWarning, EventRecord> tempRecord = new EventRecordGenerator<>();
+        tempRecord.source(temperatureWarning)
+                .sourceType(TemperatureWarning.class)
+                .targetType(EventRecord.class)
+                .expectedNum(1000000)
+                .fPositive(0.01);
+        DataStream<EventRecord> trydo = tempRecord.run();
+        trydo.print();
 
         // secondsStream
         DataStream<PressureEvent> secondsStream = env.addSource(new PressureSource(1, 3, 20))
